@@ -8,7 +8,6 @@ Passes and recieves strings from dronekit_functions which interacts with droneki
 """
 
 import subprocess
-import sys
 
 class FCInterface:
 
@@ -19,7 +18,7 @@ class FCInterface:
 
         # opens cli running python2 dronekit functions
         self.py2 = subprocess.Popen(['python', '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-
+        self. waypoint_reached = False
         print("FCInterface initialised")
 
     def interface(self, command):
@@ -34,23 +33,21 @@ class FCInterface:
         print('reading')
         line = 0
         for i in range(0,100):
-           
+            
+            self.waypoint_reached = False
+            
             # keeps last line printed
             cmdreturn = line
             read = self.py2.stdout.readline()
             
-            # filters NOTIFY lines to stop confusion
-            if read.startswith('NOTIFY') == False:
-                line = read
+            
+            if read.endswith('NOTIFY') == True:
+                self.waypoint_reached = True
             
             print(line)
             if line.startswith('DONE'):
                 return(cmdreturn)
                 break
-    
-    def callbackfn(self,attribute):
-        #working on this
-        True
 
     def connection(self):
         """
@@ -79,7 +76,8 @@ class FCInterface:
         position = ans.split()
         lat = int(position[0])
         lon = int(position[1])
-        return lat, lon
+        
+        return lat, lon, self.waypoint_reached
 
     def getAltitude(self):
         """
@@ -118,6 +116,8 @@ class FCInterface:
         self.interface('startLandingSequence')
         
     def onActionCompleted(self, fn):
+        if self.waypoint_reached:
+            return True
         True
     	# Non-blocking callback function
     	# Called once by command.py during aircraft boot

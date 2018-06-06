@@ -82,9 +82,17 @@ def getHeading():
     print 'DONE'
 
 def getPosition():
+    # must be called after a waypoint has been set
     lat = vehicle.location.global_frame.lat
     lon = vehicle.location.global_frame.lon
     print lat, lon
+    
+    # performs comparison between waypoint and current position
+    lat_waypoint = drone_position_notify[0]
+    lon_waypoint = drone_position_notify[1]
+    if (round(lat_waypoint, 5) == round(int(lat), 5) and round(lon_waypoint, 5) == round(int(lon), 5)):
+        print 'DONE NOTIFY'
+    
     print 'DONE'
 
 def getAltitude():
@@ -99,10 +107,16 @@ def getStatus():
 
 def setWaypoint(position):
     lat, lon, alt = position
-    # convert to integers as input is string
+    # convert to integers as input is 
     lat = float(lat)
     lon = float(lon) 
     alt = float(alt)
+    
+    # saves current waypoint co-ordinates
+    global drone_position_notify
+    drone_position_notify = [lat, lon]
+    
+    
     # converts to co-ord system relative to home point
     point = LocationGlobalRelative(lat,lon,alt)
     vehicle.simple_goto(point)
