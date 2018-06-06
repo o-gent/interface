@@ -8,6 +8,7 @@ Passes and recieves strings from dronekit_functions which interacts with droneki
 """
 
 import subprocess
+import time
 
 class FCInterface:
 
@@ -123,6 +124,8 @@ class FCInterface:
     	# Called once by command.py during aircraft boot
     	# Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
-# Test
-fcInterface = FCInterface()
-fcInterface.connection()
+
+FCInterface.connection()
+FCInterface.getPosition()
+FCInterface.startTakeoffSequence()
+time.wait(10)
