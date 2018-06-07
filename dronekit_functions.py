@@ -9,13 +9,10 @@ from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 import time, argparse
 
-<<<<<<< HEAD
-global drone_position_notify
-=======
->>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0
 drone_position_notify = [0,0]
 
 def connection():
+    
     # sitl stuff   ###########################
     import dronekit_sitl
     sitl = dronekit_sitl.start_default()
@@ -86,18 +83,8 @@ def getHeading():
     print 'DONE'
 
 def getPosition():
-<<<<<<< HEAD
-    lat = vehicle.location.global_frame.lat
-    lon = vehicle.location.global_frame.lon
-    print lat, lon
-    try:
-        print drone_position_notify
-    except:
-        pass
-=======
     lat = float(vehicle.location.global_frame.lat)
     lon = float(vehicle.location.global_frame.lon)
->>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0
     
     try:
         print drone_position_notify
@@ -105,12 +92,6 @@ def getPosition():
         pass
     # performs comparison between waypoint and current position
     try:
-<<<<<<< HEAD
-        lat_waypoint = drone_position_notify[0]
-        lon_waypoint = drone_position_notify[1]
-        if (round(lat_waypoint, 5) == round(int(lat), 5) and round(lon_waypoint, 5) == round(int(lon), 5)):
-            print 'DONE NOTIFY'
-=======
         lat_waypoint = float(drone_position_notify[0])
         lon_waypoint = float(drone_position_notify[1])
         lat_check = (lat_waypoint - lat)/lat_waypoint
@@ -121,16 +102,12 @@ def getPosition():
         
         if (lat_check < lat_percent and lon_check < lon_percent):
             print 'NOTIFY'
->>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0
         else:
             print 'not reached!' 
     except:
         print ' falied ' 
-        pass
-<<<<<<< HEAD
-=======
+    
     print lat, lon
->>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0
     print 'DONE'
 
 def getAltitude():
@@ -160,8 +137,8 @@ def setWaypoint(position):
     alt = float(alt)
     
     # saves current waypoint co-ordinates
+    global drone_position_notify
     drone_position_notify = [lat, lon]
-    
     
     # converts to co-ord system relative to home point
     point = LocationGlobalRelative(lat,lon,alt)
@@ -218,7 +195,7 @@ def notification(fn):
     # Notification functions
     def location_callback(self, attr_name, value):
         print "Location (Global): ", value
-
+    
     if fn == 'LOCATION':
         # Add a callback `location_callback` for the `global_frame` attribute.
         vehicle.add_attribute_listener('location.global_frame', location_callback)
@@ -231,46 +208,6 @@ def notification(fn):
 
 while 1:
     # looks for command and optional arguments 
-<<<<<<< HEAD
-    cmd = raw_input('>').split()
-    if cmd[0] == "connection":
-        connection()
-    if cmd[0] == "getHeading":
-        getHeading()
-    if cmd[0] == "getPosition":
-        getPosition()
-    if cmd[0] == "getPosition":
-        getPosition()
-    if cmd[0] == "getAltitude":
-        getAltitude()
-    if cmd[0] == "setWaypoint":
-        setWaypoint(cmd[1:])
-    if cmd[0] == "setHeading":
-        setHeading(cmd[1:])
-    if cmd[0] == "startTakeoffSequence":
-        startTakeoffSequence()
-    if cmd[0] == "startLandingSequence":
-        startLandingSequence()
-    if cmd[0] == "getStatus":
-        getStatus()
-    if cmd[0] == "notification":
-        notification()
-    if cmd[0] == "getHome":
-        getHome()
-#    if cmd == "telemetryTransmit":
-#        telemetryTransmit(args)
-
-    if cmd == "onActionCompleted":
-        print 'hi'
-    
-    if cmd == "exit":
-        # sitl stuff
-        try:
-            sitl.stop()
-        except:
-            print 'no sitl!'
-        sys.exit()
-=======
     try:
         cmd = raw_input('>').split()
         if cmd[0] == "connection":
@@ -297,11 +234,6 @@ while 1:
             notification()
         if cmd[0] == "getHome":
             getHome()
-    #    if cmd == "telemetryTransmit":
-    #        telemetryTransmit(args)
-    
-        if cmd == "onActionCompleted":
-            print 'hi'
         
         if cmd == "exit":
             # sitl stuff
@@ -311,4 +243,3 @@ while 1:
                 print 'no sitl!'
     except:
         time.sleep(0.1)
->>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0

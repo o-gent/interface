@@ -132,13 +132,6 @@ time.sleep(10)
 FCI.getPosition()
 lat, lon, reached = FCI.getPosition()
 
-<<<<<<< HEAD
-
-FCInterface.connection()
-FCInterface.getPosition()
-FCInterface.startTakeoffSequence()
-time.wait(10)
-=======
 FCI.setWaypoint(lat + 0.0001, lon, 600)
 for i in range(10000):
     lat, lon, reached = FCI.getPosition()
@@ -147,4 +140,3 @@ for i in range(10000):
         print('reached')
         break
 FCI.startLandingSequence()
->>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0
