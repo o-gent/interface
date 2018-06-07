@@ -13,14 +13,11 @@ import time
 class FCInterface:
 
     def __init__(self):
-#        moduleFolder = 'fcinterfacedev/'
-#        isLinux = sys.platform.startswith('linux')
-#        pyCommand = 'python2' if isLinux else 'python'
-
+        
         # opens cli running python2 dronekit functions
-        self.py2 = subprocess.Popen(['python', '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-        self. waypoint_reached = False
-        print("FCInterface initialised")
+        self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+        #self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+        print ("FCInterface initialised")
 
     def interface(self, command):
         """
@@ -37,16 +34,19 @@ class FCInterface:
             
             self.waypoint_reached = False
             
+            
             # keeps last line printed
             cmdreturn = line
             read = self.py2.stdout.readline()
             
-            
-            if read.endswith('NOTIFY') == True:
-                self.waypoint_reached = True
-            
-            print(line)
-            if line.startswith('DONE'):
+            if read.startswith('NOTIFY'):
+                try:
+                    self.waypoint_reached_fn()
+                except:
+                    pass
+                
+            print(read)
+            if read.startswith('DONE'):
                 return(cmdreturn)
                 break
 
@@ -66,20 +66,21 @@ class FCInterface:
         """
         ans = self.interface('getHeading')
         return ans 
-
+    
     def getPosition(self):
         """
         no args, returns lat and lon as two vars
         """
         ans = self.interface('getPosition')
-        
         # converts single string to two ints
-        position = ans.split()
-        lat = int(position[0])
-        lon = int(position[1])
+        try:
+            position = ans.split()
+            lat = int(position[0])
+            lon = int(position[1])
+            return lat, lon, self.waypoint_reached
+        except:
+            return 0, 0, False 
         
-        return lat, lon, self.waypoint_reached
-
     def getAltitude(self):
         """
         returns altitude above mean sea level in meters, no args
@@ -117,15 +118,33 @@ class FCInterface:
         self.interface('startLandingSequence')
         
     def onActionCompleted(self, fn):
-        if self.waypoint_reached:
-            return True
-        True
-    	# Non-blocking callback function
-    	# Called once by command.py during aircraft boot
-    	# Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
+        self.waypoint_reached_fn = fn
+        # Non-blocking callback function
+        # Called once by command.py during aircraft boot
+        # Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
+FCI = FCInterface()
+time.sleep(4)
+
+FCI.connection()
+FCI.startTakeoffSequence()
+time.sleep(10)
+FCI.getPosition()
+lat, lon, reached = FCI.getPosition()
+
+<<<<<<< HEAD
 
 FCInterface.connection()
 FCInterface.getPosition()
 FCInterface.startTakeoffSequence()
 time.wait(10)
+=======
+FCI.setWaypoint(lat + 0.0001, lon, 600)
+for i in range(10000):
+    lat, lon, reached = FCI.getPosition()
+    time.sleep(0.25)
+    if reached:
+        print('reached')
+        break
+FCI.startLandingSequence()
+>>>>>>> 8bc4ad125c5d9db011675b32295bf7fadc4d6ad0
