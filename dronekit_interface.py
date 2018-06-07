@@ -12,7 +12,49 @@ import time
 
 class FCInterface:
 
+# =============================================================================
+#     def __init__(self):
+#         
+#         # opens cli running python2 dronekit functions
+#         self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+#         #self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+#         print ("FCInterface initialised")
+# 
+#     def interface(self, command):
+#         """
+#         pass a function name to dronekit_functions
+#         returns single line string resulting from function. When DONE is passed function is considered complete and 
+#         script moves on.
+#         """
+#         print('writing------------------------------------------------------------------------')
+#         self.py2.stdin.write(command + '\n')
+#         self.py2.stdin.flush()
+#         print('reading------------------------------------------------------------------------')
+#         for i in range(0,100):
+#             
+#             #self.waypoint_reached = False
+#             
+#             
+#             read = self.py2.stdout.readline()
+#             
+#             if read.startswith('NOTIFY'):
+#                 try:
+#                     self.waypoint_reached_fn()
+#                 except:
+#                     pass
+#             
+#             print(read)
+#             # keeps last line printed
+#             cmdreturn = read
+#             
+#             if read.startswith('DONE'):
+#                 return(cmdreturn)
+#                 break
+# =============================================================================
     def __init__(self):
+        self.timeoutLines = 1000
+        self.notificationCallbacks = {} 	# dictionary, populated by setNotificationCallback
+        self.notificationQueue = [] 		# last at end
         
         # opens cli running python2 dronekit functions
         self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
@@ -25,30 +67,45 @@ class FCInterface:
         returns single line string resulting from function. When DONE is passed function is considered complete and 
         script moves on.
         """
-        print('writing')
+        print("")
+        print('Sending cmd:', command)
         self.py2.stdin.write(command + '\n')
         self.py2.stdin.flush()
-        print('reading')
-        line = 0
-        for i in range(0,100):
+        print('Listening...')
+        
+        returnLine = None 	# always the last line before the current one
+        numLinesRead = 0
+        stackHeight = 0 	# number of execution levels = number of COMMANDs printed - number of DONEs printed
+        while numLinesRead < self.timeoutLines:
+			# self.waypoint_reached = False     (no longer required)
+			
+			# check integrity of execution stack
+            #if stackHeight == 0:
+                #print("Erorr: stack height is non-zero = ", stackHeight)
             
-            self.waypoint_reached = False
-            
-            
-            # keeps last line printed
-            cmdreturn = line
-            read = self.py2.stdout.readline()
-            
+            # read subprocess output
+            read = self.py2.stdout.readline()[:-1] # removes final newline character
+            # print line through to interface
+            print(str(numLinesRead) + '| ' + read)
+            # handles
             if read.startswith('NOTIFY'):
-                try:
-                    self.waypoint_reached_fn()
-                except:
-                    pass
+                self.notificationQueue.append(read[7:])
+            elif read.startswith('COMMAND'):
+                stackHeight += 1
                 
-            print(read)
-            if read.startswith('DONE'):
-                return(cmdreturn)
+            elif read.startswith('DONE'):
+                stackHeight -= 1
+                return returnLine
                 break
+            
+            returnLine = read
+            numLinesRead += 1
+        
+        # only reached if DONE is not returned
+        print("Command timed out after", numLinesRead, "lines read")
+        
+    def setNotificationCallback(self, name, fn):
+        self.notificationCallbacks[name] = fn
 
     def connection(self):
         """
@@ -72,14 +129,16 @@ class FCInterface:
         no args, returns lat and lon as two vars
         """
         ans = self.interface('getPosition')
+
         # converts single string to two ints
         try:
             position = ans.split()
-            lat = int(position[0])
-            lon = int(position[1])
-            return lat, lon, self.waypoint_reached
+            lat = float(position[0])
+            lon = float(position[1])
+            return lat, lon
         except:
-            return 0, 0, False 
+            print('getPosition failed')
+            return 0, 0
         
     def getAltitude(self):
         """
@@ -128,15 +187,20 @@ time.sleep(4)
 
 FCI.connection()
 FCI.startTakeoffSequence()
-time.sleep(10)
-FCI.getPosition()
-lat, lon, reached = FCI.getPosition()
+time.sleep(30)
 
-FCI.setWaypoint(lat + 0.0001, lon, 600)
+FCI.getAltitude()
+
+FCI.getPosition()
+lat, lon = FCI.getPosition()
+
+print(lat, lon)
+
+time.sleep(5)
+
+FCI.setWaypoint(float(lat - 0.001), lon, 600)
 for i in range(10000):
-    lat, lon, reached = FCI.getPosition()
-    time.sleep(0.25)
-    if reached:
-        print('reached')
-        break
+    lat, lon = FCI.getPosition()
+    time.sleep(2)
+    
 FCI.startLandingSequence()

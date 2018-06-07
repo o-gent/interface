@@ -53,11 +53,12 @@ def connection():
     
     
     # need to sort out home location setting
+    # set home location
+    cmds = vehicle.commands
+    cmds.download()
+    cmds.wait_ready()
     
-# =============================================================================
-#     # set home location
-#     vehicle.home_location=vehicle.location.global_frame
-# =============================================================================
+    print str(vehicle.home_location)
     
     # Copter should arm in GUIDED mode
     vehicle.mode    = VehicleMode("GUIDED")
@@ -90,6 +91,7 @@ def getPosition():
         print drone_position_notify
     except:
         pass
+    
     # performs comparison between waypoint and current position
     try:
         lat_waypoint = float(drone_position_notify[0])
@@ -105,7 +107,7 @@ def getPosition():
         else:
             print 'not reached!' 
     except:
-        print ' falied ' 
+        print 'failed' 
     
     print lat, lon
     print 'DONE'
@@ -125,12 +127,15 @@ def getHome():
     print 'DONE'
 
 def setWaypoint(position):
+    
     try:
         position[2]
     except:
-        position.append(int(vehicle.location.global_frame.alt))
+        alt = float(vehicle.location.global_frame.alt)
     
     lat, lon, alt = position
+    
+    print position
     # convert to integers as input is 
     lat = float(lat)
     lon = float(lon) 
@@ -139,6 +144,9 @@ def setWaypoint(position):
     # saves current waypoint co-ordinates
     global drone_position_notify
     drone_position_notify = [lat, lon]
+    
+    # debug 
+    print drone_position_notify
     
     # converts to co-ord system relative to home point
     point = LocationGlobalRelative(lat,lon,alt)
@@ -173,8 +181,9 @@ def setHeading(heading_relative):
 
 def startTakeoffSequence():
     # arming vehicle and making sure it is armed, if it fails then nothing else will work. 
-    for i in range(0,100):
+    for i in range(0,500):
         vehicle.armed = True
+        time.sleep(0.5)
         print "Armed: %s" % vehicle.armed
         if vehicle.armed == True:
             break
@@ -214,8 +223,6 @@ while 1:
             connection()
         if cmd[0] == "getHeading":
             getHeading()
-        if cmd[0] == "getPosition":
-            getPosition()
         if cmd[0] == "getPosition":
             getPosition()
         if cmd[0] == "getAltitude":
