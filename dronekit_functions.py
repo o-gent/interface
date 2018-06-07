@@ -16,7 +16,6 @@ import dronekit_sitl
 sitl = dronekit_sitl.start_default()
 ##########################################
 
-global drone_position_notify
 drone_position_notify = [0,0]
 
 def connection():
@@ -86,23 +85,23 @@ def getHeading():
 def getPosition():
     lat = vehicle.location.global_frame.lat
     lon = vehicle.location.global_frame.lon
-    print lat, lon
+    
     try:
         print drone_position_notify
     except:
         pass
-    
     # performs comparison between waypoint and current position
     try:
         lat_waypoint = drone_position_notify[0]
         lon_waypoint = drone_position_notify[1]
         if (round(lat_waypoint, 5) == round(int(lat), 5) and round(lon_waypoint, 5) == round(int(lon), 5)):
-            print 'DONE NOTIFY'
+            print 'NOTIFY'
         else:
             print 'not reached!' 
     except:
         print ' falied ' 
         pass
+    print lat, lon
     print 'DONE'
 
 def getAltitude():
@@ -132,6 +131,7 @@ def setWaypoint(position):
     alt = float(alt)
     
     # saves current waypoint co-ordinates
+    global drone_position_notify
     drone_position_notify = [lat, lon]
     
     
@@ -240,4 +240,3 @@ while 1:
             sitl.stop()
         except:
             print 'no sitl!'
-        sys.exit()

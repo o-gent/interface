@@ -42,8 +42,8 @@ class FCInterface:
             read = self.py2.stdout.readline()
             
             
-            if read.endswith('NOTIFY') == True:
-                self.waypoint_reached = True
+            if read.beginswith('NOTIFY') == True:
+                
             
             print(line)
             if line.startswith('DONE'):
