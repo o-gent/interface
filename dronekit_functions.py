@@ -226,7 +226,8 @@ while 1:
         getStatus()
     if cmd[0] == "notification":
         notification()
-
+    if cmd[0] == "getHome":
+        getHome()
 #    if cmd == "telemetryTransmit":
 #        telemetryTransmit(args)
 
