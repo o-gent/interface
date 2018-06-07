@@ -73,12 +73,14 @@ class FCInterface:
         """
         ans = self.interface('getPosition')
         # converts single string to two ints
-        print(str(ans))
-        position = ans.split()
-        lat = int(position[0])
-        lon = int(position[1])
-        return lat, lon, self.waypoint_reached
-
+        try:
+            position = ans.split()
+            lat = int(position[0])
+            lon = int(position[1])
+            return lat, lon, self.waypoint_reached
+        except:
+            return 0, 0, False 
+        
     def getAltitude(self):
         """
         returns altitude above mean sea level in meters, no args
@@ -130,12 +132,11 @@ time.sleep(10)
 FCI.getPosition()
 lat, lon, reached = FCI.getPosition()
 
-# FCI.setWaypoint(lat + 0.0001, lon, 600)
-# for i in range(10000):
-#     lat, lon, reached = FCInterface.getPosition()
-#     time.wait(0.25)
-#     if reached:
-#         print('reached')
-#         break
-# FCI.startLandingSequence()
-# =============================================================================
+FCI.setWaypoint(lat + 0.0001, lon, 600)
+for i in range(10000):
+    lat, lon, reached = FCI.getPosition()
+    time.sleep(0.25)
+    if reached:
+        print('reached')
+        break
+FCI.startLandingSequence()
