@@ -8,7 +8,7 @@ list of functions interacting with dronekit, accepting strings as input to execu
 
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
-import time, sys, argparse
+import time, argparse
 
 
 # sitl stuff   ###########################
@@ -83,8 +83,8 @@ def getHeading():
     print 'DONE'
 
 def getPosition():
-    lat = vehicle.location.global_frame.lat
-    lon = vehicle.location.global_frame.lon
+    lat = float(vehicle.location.global_frame.lat)
+    lon = float(vehicle.location.global_frame.lon)
     
     try:
         print drone_position_notify
@@ -92,9 +92,15 @@ def getPosition():
         pass
     # performs comparison between waypoint and current position
     try:
-        lat_waypoint = drone_position_notify[0]
-        lon_waypoint = drone_position_notify[1]
-        if (round(lat_waypoint, 5) == round(int(lat), 5) and round(lon_waypoint, 5) == round(int(lon), 5)):
+        lat_waypoint = float(drone_position_notify[0])
+        lon_waypoint = float(drone_position_notify[1])
+        lat_check = (lat_waypoint - lat)/lat_waypoint
+        lon_check = (lon_waypoint - lon)/lon_waypoint
+        
+        lat_percent = 5e-08
+        lon_percent = 5e-08
+        
+        if (lat_check < lat_percent and lon_check < lon_percent):
             print 'NOTIFY'
         else:
             print 'not reached!' 
@@ -240,3 +246,4 @@ while 1:
             sitl.stop()
         except:
             print 'no sitl!'
+    time.wait(0.05)

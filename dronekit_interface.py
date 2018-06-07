@@ -19,7 +19,6 @@ class FCInterface:
 
         # opens cli running python2 dronekit functions
         self.py2 = subprocess.Popen(['python', '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-        self. waypoint_reached = False
         print("FCInterface initialised")
 
     def interface(self, command):
@@ -42,11 +41,15 @@ class FCInterface:
             read = self.py2.stdout.readline()
             
             
-            if read.beginswith('NOTIFY') == True:
+            if read.startswith('NOTIFY'):
+                try:
+                    self.waypoint_reached_fn
+                except:
+                    pass
                 
             
-            print(line)
-            if line.startswith('DONE'):
+            print(read)
+            if read.startswith('DONE'):
                 return(cmdreturn)
                 break
 
@@ -117,15 +120,22 @@ class FCInterface:
         self.interface('startLandingSequence')
         
     def onActionCompleted(self, fn):
-        if self.waypoint_reached:
-            return True
-        True
-    	# Non-blocking callback function
-    	# Called once by command.py during aircraft boot
-    	# Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
+        self.waypoint_reached_fn = fn
+        # Non-blocking callback function
+        # Called once by command.py during aircraft boot
+        # Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
-
-FCInterface.connection()
-FCInterface.getPosition()
-FCInterface.startTakeoffSequence()
+FCI = FCInterface()
+FCI.connection()
+FCI.getPosition()
+FCI.startTakeoffSequence()
 time.wait(10)
+lat, lon, reached = FCI.getPosition()
+FCI.setWaypoint(lat + 0.0001, lon, 600)
+for i in range(10000):
+    lat, lon, reached = FCInterface.getPosition()
+    time.wait(0.25)
+    if reached:
+        print('reached')
+        break
+FCI.startLandingSequence()
