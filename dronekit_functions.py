@@ -5,20 +5,19 @@ PYTHON 2
 list of functions interacting with dronekit, accepting strings as input to execute functions
 @author: OliG
 """
-
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 import time, argparse
 
-
-# sitl stuff   ###########################
-import dronekit_sitl
-sitl = dronekit_sitl.start_default()
-##########################################
-
 drone_position_notify = [0,0]
 
 def connection():
+    # sitl stuff   ###########################
+    import dronekit_sitl
+    sitl = dronekit_sitl.start_default()
+    print 'sitl started'
+    ##########################################
+    
     # literally no clue what these 5 lines do but it might be needed but actually probably not
     # Parse connection argument
     parser = argparse.ArgumentParser()
@@ -246,4 +245,4 @@ while 1:
             sitl.stop()
         except:
             print 'no sitl!'
-    time.wait(0.05)
+    time.sleep(0.05)

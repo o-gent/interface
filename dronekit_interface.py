@@ -13,13 +13,11 @@ import time
 class FCInterface:
 
     def __init__(self):
-#        moduleFolder = 'fcinterfacedev/'
-#        isLinux = sys.platform.startswith('linux')
-#        pyCommand = 'python2' if isLinux else 'python'
-
+        
         # opens cli running python2 dronekit functions
-        self.py2 = subprocess.Popen(['python', '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-        print("FCInterface initialised")
+        self.py2 = subprocess.Popen(['python','-u','C:\Users\olive\Documents\GitHub\interface\dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+        #self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+        print ("FCInterface initialised")
 
     def interface(self, command):
         """
@@ -43,7 +41,7 @@ class FCInterface:
             
             if read.startswith('NOTIFY'):
                 try:
-                    self.waypoint_reached_fn
+                    self.waypoint_reached_fn()
                 except:
                     pass
                 
@@ -126,16 +124,18 @@ class FCInterface:
         # Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
 FCI = FCInterface()
-FCI.connection()
-FCI.getPosition()
-FCI.startTakeoffSequence()
-time.wait(10)
-lat, lon, reached = FCI.getPosition()
-FCI.setWaypoint(lat + 0.0001, lon, 600)
-for i in range(10000):
-    lat, lon, reached = FCInterface.getPosition()
-    time.wait(0.25)
-    if reached:
-        print('reached')
-        break
-FCI.startLandingSequence()
+#FCI.connection()
+# =============================================================================
+# FCI.getPosition()
+# FCI.startTakeoffSequence()
+# time.wait(10)
+# lat, lon, reached = FCI.getPosition()
+# FCI.setWaypoint(lat + 0.0001, lon, 600)
+# for i in range(10000):
+#     lat, lon, reached = FCInterface.getPosition()
+#     time.wait(0.25)
+#     if reached:
+#         print('reached')
+#         break
+# FCI.startLandingSequence()
+# =============================================================================
