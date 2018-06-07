@@ -208,41 +208,43 @@ def notification(fn):
 
 while 1:
     # looks for command and optional arguments 
-    cmd = raw_input('>').split()
-    if cmd[0] == "connection":
-        connection()
-    if cmd[0] == "getHeading":
-        getHeading()
-    if cmd[0] == "getPosition":
-        getPosition()
-    if cmd[0] == "getPosition":
-        getPosition()
-    if cmd[0] == "getAltitude":
-        getAltitude()
-    if cmd[0] == "setWaypoint":
-        setWaypoint(cmd[1:])
-    if cmd[0] == "setHeading":
-        setHeading(cmd[1:])
-    if cmd[0] == "startTakeoffSequence":
-        startTakeoffSequence()
-    if cmd[0] == "startLandingSequence":
-        startLandingSequence()
-    if cmd[0] == "getStatus":
-        getStatus()
-    if cmd[0] == "notification":
-        notification()
-    if cmd[0] == "getHome":
-        getHome()
-#    if cmd == "telemetryTransmit":
-#        telemetryTransmit(args)
-
-    if cmd == "onActionCompleted":
-        print 'hi'
+    try:
+        cmd = raw_input('>').split()
+        if cmd[0] == "connection":
+            connection()
+        if cmd[0] == "getHeading":
+            getHeading()
+        if cmd[0] == "getPosition":
+            getPosition()
+        if cmd[0] == "getPosition":
+            getPosition()
+        if cmd[0] == "getAltitude":
+            getAltitude()
+        if cmd[0] == "setWaypoint":
+            setWaypoint(cmd[1:])
+        if cmd[0] == "setHeading":
+            setHeading(cmd[1:])
+        if cmd[0] == "startTakeoffSequence":
+            startTakeoffSequence()
+        if cmd[0] == "startLandingSequence":
+            startLandingSequence()
+        if cmd[0] == "getStatus":
+            getStatus()
+        if cmd[0] == "notification":
+            notification()
+        if cmd[0] == "getHome":
+            getHome()
+    #    if cmd == "telemetryTransmit":
+    #        telemetryTransmit(args)
     
-    if cmd == "exit":
-        # sitl stuff
-        try:
-            sitl.stop()
-        except:
-            print 'no sitl!'
-    time.sleep(0.05)
+        if cmd == "onActionCompleted":
+            print 'hi'
+        
+        if cmd == "exit":
+            # sitl stuff
+            try:
+                sitl.stop()
+            except:
+                print 'no sitl!'
+    except:
+        time.sleep(0.1)

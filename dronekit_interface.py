@@ -66,18 +66,17 @@ class FCInterface:
         """
         ans = self.interface('getHeading')
         return ans 
-
+    
     def getPosition(self):
         """
         no args, returns lat and lon as two vars
         """
         ans = self.interface('getPosition')
-        
         # converts single string to two ints
+        print(str(ans))
         position = ans.split()
         lat = int(position[0])
         lon = int(position[1])
-        
         return lat, lon, self.waypoint_reached
 
     def getAltitude(self):
@@ -124,12 +123,13 @@ class FCInterface:
 
 FCI = FCInterface()
 time.sleep(4)
+
 FCI.connection()
-# =============================================================================
-# FCI.getPosition()
-# FCI.startTakeoffSequence()
-# time.wait(10)
-# lat, lon, reached = FCI.getPosition()
+FCI.startTakeoffSequence()
+time.sleep(10)
+FCI.getPosition()
+lat, lon, reached = FCI.getPosition()
+
 # FCI.setWaypoint(lat + 0.0001, lon, 600)
 # for i in range(10000):
 #     lat, lon, reached = FCInterface.getPosition()
