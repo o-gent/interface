@@ -15,7 +15,7 @@ class FCInterface:
     def __init__(self):
         
         # opens cli running python2 dronekit functions
-        self.py2 = subprocess.Popen(['python','-u','C:\Users\olive\Documents\GitHub\interface\dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+        self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
         #self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
         print ("FCInterface initialised")
 
@@ -34,10 +34,10 @@ class FCInterface:
             
             self.waypoint_reached = False
             
+            
             # keeps last line printed
             cmdreturn = line
             read = self.py2.stdout.readline()
-            
             
             if read.startswith('NOTIFY'):
                 try:
@@ -45,7 +45,6 @@ class FCInterface:
                 except:
                     pass
                 
-            
             print(read)
             if read.startswith('DONE'):
                 return(cmdreturn)
@@ -124,7 +123,8 @@ class FCInterface:
         # Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
 FCI = FCInterface()
-#FCI.connection()
+time.sleep(4)
+FCI.connection()
 # =============================================================================
 # FCI.getPosition()
 # FCI.startTakeoffSequence()
