@@ -16,6 +16,8 @@ import dronekit_sitl
 sitl = dronekit_sitl.start_default()
 ##########################################
 
+global drone_position_notify
+drone_position_notify = [0,0]
 
 def connection():
     # literally no clue what these 5 lines do but it might be needed but actually probably not
@@ -82,17 +84,25 @@ def getHeading():
     print 'DONE'
 
 def getPosition():
-    # must be called after a waypoint has been set
     lat = vehicle.location.global_frame.lat
     lon = vehicle.location.global_frame.lon
     print lat, lon
+    try:
+        print drone_position_notify
+    except:
+        pass
     
     # performs comparison between waypoint and current position
-    lat_waypoint = drone_position_notify[0]
-    lon_waypoint = drone_position_notify[1]
-    if (round(lat_waypoint, 5) == round(int(lat), 5) and round(lon_waypoint, 5) == round(int(lon), 5)):
-        print 'DONE NOTIFY'
-    
+    try:
+        lat_waypoint = drone_position_notify[0]
+        lon_waypoint = drone_position_notify[1]
+        if (round(lat_waypoint, 5) == round(int(lat), 5) and round(lon_waypoint, 5) == round(int(lon), 5)):
+            print 'DONE NOTIFY'
+        else:
+            print 'not reached!' 
+    except:
+        print ' falied ' 
+        pass
     print 'DONE'
 
 def getAltitude():
@@ -105,7 +115,16 @@ def getStatus():
     print vehicle.system_status
     print 'DONE'
 
+def getHome():
+    print vehicle.home_location
+    print 'DONE'
+
 def setWaypoint(position):
+    try:
+        position[2]
+    except:
+        position.append(int(vehicle.location.global_frame.alt))
+    
     lat, lon, alt = position
     # convert to integers as input is 
     lat = float(lat)
@@ -113,7 +132,6 @@ def setWaypoint(position):
     alt = float(alt)
     
     # saves current waypoint co-ordinates
-    global drone_position_notify
     drone_position_notify = [lat, lon]
     
     
@@ -208,7 +226,8 @@ while 1:
         getStatus()
     if cmd[0] == "notification":
         notification()
-
+    if cmd[0] == "getHome":
+        getHome()
 #    if cmd == "telemetryTransmit":
 #        telemetryTransmit(args)
 
