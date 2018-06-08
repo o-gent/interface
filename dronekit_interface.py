@@ -10,6 +10,11 @@ Passes and recieves strings from dronekit_functions which interacts with droneki
 import subprocess
 import time
 
+log_enable = 1
+def logs(*args):
+    if log_enable == 1:
+        print(args)
+
 class FCInterface:
 
     def __init__(self):
@@ -20,18 +25,18 @@ class FCInterface:
         
         # opens cli running python2 dronekit functions
         self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-        print ("FCInterface initialised")
+        logs("FCInterface initialised")
 
     def interface(self, command):
         """
         pass a function name to dronekit_functions
         """
         
-        print("")
-        print('Sending cmd:', command)
+        logs("")
+        logs('Sending cmd:', command)
         self.py2.stdin.write(command + '\n')
         self.py2.stdin.flush()
-        print('Listening...')
+        logs('Listening...')
         
         returnLine = None 	# always the last line before the current one
         numLinesRead = 0
@@ -47,11 +52,12 @@ class FCInterface:
             # read subprocess output
             read = self.py2.stdout.readline()[:-1] # removes final newline character
             # print line through to interface
-            print(str(numLinesRead) + '| ' + read)
+            logs('FCI', '| ',str(numLinesRead) + '| ' + read)
             
             # handles
             if read.startswith('NOTIFY'):
-                self.notificationQueue.append(read[:6])
+                self.notificationQueue.append(read[7:])
+            
             elif read.startswith('COMMAND'):
                 stackHeight += 1
                 
@@ -63,7 +69,7 @@ class FCInterface:
             returnLine = read
             numLinesRead += 1
         # only reached if DONE is not returned
-        print("Command timed out after", numLinesRead, "lines read")
+        logs("Command timed out after", numLinesRead, "lines read")
         
     def setNotificationCallback(self, name, fn):
         self.notificationCallbacks[name] = fn
@@ -71,7 +77,7 @@ class FCInterface:
     def handleNotifications(self):
         while len(self.notificationQueue) > 0:
             note = self.notificationQueue.pop(0)
-            print("Handling notification ", note)
+            logs("Handling notification ", note)
             
             if note in self.notificationCallbacks:
                 self.notificationCallbacks[note]()
@@ -158,20 +164,20 @@ numWPsDone = 0
 def waypointReachedCallback():
 	global numWPsDone, lat, lon
 
-	print("Waypoint reached (callback)")
+	logs("Waypoint reached (callback)")
 	numWPsDone += 1
-	print("WPs completed:", numWPsDone)
+	logs("WPs completed:", numWPsDone)
 
 	if numWPsDone >= 5:
-		print(numWPsDone, "WPs complete, starting landing...")
+		logs(numWPsDone, "WPs complete, starting landing...")
 		fci.startLandingSequence()
 	else:
-		print("Setting next WP...")
-		fci.setWaypoint(lat, lon + 0.0002, 600)
+		logs("Setting next WP...")
+		fci.setWaypoint(lat, lon + 0.0002)
 
 # init interface
 fci = FCInterface()
-fci.setNotificationCallback('NOTIFY', waypointReachedCallback) # set callback reference
+fci.setNotificationCallback('positionReached', waypointReachedCallback) # set callback reference
 time.sleep(4)
 
 # [TODO] do simulator here instead
@@ -183,16 +189,16 @@ time.sleep(10)
 
 # get current position
 lat, lon = fci.getPosition()
-print('Initial position:', lat, lon)
+logs('Initial position:', lat, lon)
 
 # set initial waypoint
-fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 600) # 9e-06 deg = 1 m
+fci.setWaypoint(lat, lon + approxDegsPerMetre * 10) # 9e-06 deg = 1 m
 
 # keep checking position and handling notifications
 for i in range(10000):
 	# update position
 	lat, lon = fci.getPosition()
-	print('Pos checked cyclically:', lat, lon)
+	logs('Pos checked cyclically:', lat, lon)
 
 	# handle notifications raised
 	fci.handleNotifications()

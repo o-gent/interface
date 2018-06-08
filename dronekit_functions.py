@@ -90,7 +90,7 @@ def getPosition():
         lon_percent = 5e-08
         
         if (lat_check < lat_percent and lon_check < lon_percent):
-            print 'NOTIFY'
+            print 'NOTIFY positionReached'
         else:
             print 'not reached!' 
     except:
