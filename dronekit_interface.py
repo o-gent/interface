@@ -25,9 +25,8 @@ class FCInterface:
     def interface(self, command):
         """
         pass a function name to dronekit_functions
-        returns single line string resulting from function. When DONE is passed function is considered complete and 
-        script moves on.
         """
+        
         print("")
         print('Sending cmd:', command)
         self.py2.stdin.write(command + '\n')
@@ -52,7 +51,7 @@ class FCInterface:
             
             # handles
             if read.startswith('NOTIFY'):
-                self.notificationQueue.append(read[7:])
+                self.notificationQueue.append(read[:6])
             elif read.startswith('COMMAND'):
                 stackHeight += 1
                 
@@ -168,11 +167,11 @@ def waypointReachedCallback():
 		fci.startLandingSequence()
 	else:
 		print("Setting next WP...")
-		fci.setWaypoint(lat, lon + 0.0002, 300)
+		fci.setWaypoint(lat, lon + 0.0002, 600)
 
 # init interface
 fci = FCInterface()
-fci.setNotificationCallback('waypointReached', waypointReachedCallback) # set callback reference
+fci.setNotificationCallback('NOTIFY', waypointReachedCallback) # set callback reference
 time.sleep(4)
 
 # [TODO] do simulator here instead
@@ -199,4 +198,4 @@ for i in range(10000):
 	fci.handleNotifications()
 
 	# wait
-	time.sleep(0.25)
+	time.sleep(1)
