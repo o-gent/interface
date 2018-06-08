@@ -63,7 +63,6 @@ class FCInterface:
             
             returnLine = read
             numLinesRead += 1
-        
         # only reached if DONE is not returned
         print("Command timed out after", numLinesRead, "lines read")
         
@@ -73,7 +72,7 @@ class FCInterface:
     def handleNotifications(self):
         while len(self.notificationQueue) > 0:
             note = self.notificationQueue.pop(0)
-            print("Handling notification", note)
+            print("Handling notification ", note)
             
             if note in self.notificationCallbacks:
                 self.notificationCallbacks[note]()
@@ -156,6 +155,7 @@ class FCInterface:
 
 approxDegsPerMetre = 9e-06
 numWPsDone = 0
+
 def waypointReachedCallback():
 	global numWPsDone, lat, lon
 
@@ -186,9 +186,7 @@ time.sleep(10)
 lat, lon = fci.getPosition()
 print('Initial position:', lat, lon)
 
-## set initial waypoint
-#fci.setWaypoint(lat + 0.0001, lon, 600)
-
+# set initial waypoint
 fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 600) # 9e-06 deg = 1 m
 
 # keep checking position and handling notifications
