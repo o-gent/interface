@@ -14,13 +14,11 @@ import sys
 class FCInterface:
 
 	def __init__(self, moduleFolder=''):
-		
-		print('moduleFolder =', moduleFolder)
 
 		self.timeoutLines = 1000
 		self.notificationCallbacks = {} 	# dictionary, populated by setNotificationCallback
 		self.notificationQueue = [] 		# last at end
-		self.enableLogging = 1
+		self.enableLogging = 1				# should be enabled by default
 
 		# opens cli running python2 dronekit functions
 		filePath = moduleFolder + 'dronekit_functions.py'
@@ -186,17 +184,17 @@ if __name__ == "__main__":
 	def waypointReachedCallback():
 		global numWPsDone, flightStage, lat, lon
 
-		self.log("Waypoint reached (callback)")
+		print("Waypoint reached (callback)")
 		numWPsDone += 1
-		self.log("WPs completed:", numWPsDone)
+		print("WPs completed:", numWPsDone)
 
 		if numWPsDone >= 5:
-			self.log(numWPsDone, "WPs complete, starting landing...")
+			print(numWPsDone, "WPs complete, starting landing...")
 			fci.startLandingSequence()
 			flightStage = "rtl"
 		else:
-			self.log("Setting next WP...")
-			fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300)
+			print("Setting next WP...")
+			fci.setWaypoint(lat, lon + approxDegsPerMetre * 20)
 
 	# init interface
 	fci = FCInterface()
@@ -215,7 +213,7 @@ if __name__ == "__main__":
 	print('Initial position:', lat, lon)
 
 	# set initial waypoint
-	fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300) # 9e-06 deg = 1 m
+	fci.setWaypoint(lat, lon + approxDegsPerMetre * 10) # 9e-06 deg = 1 m
 
 	# keep checking position and handling notifications
 	for i in range(10000):

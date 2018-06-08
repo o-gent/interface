@@ -85,16 +85,16 @@ def getPosition():
 	lat = float(vehicle.location.global_frame.lat)
 	lon = float(vehicle.location.global_frame.lon)
 	
-	print 'WP: ' + str(drone_position_notify)
+	#print 'WP: ' + str(drone_position_notify)
 
 	# check if waypoint reached
-	max_d_m = 2 			# threshold in m
+	max_d_m = 0.5 			# threshold in m
 	max_d = max_d_m * m2d 	# threshold in deg, see calcs.py
 	lat_wp = float(drone_position_notify[0])
 	lon_wp = float(drone_position_notify[1])
 	lat_d = abs(lat_wp - lat)
 	lon_d = abs(lon_wp - lon)
-	print('OFFSET: ' + str([lat_d * d2m, lon_d * d2m]) + 'm')
+	#print('OFFSET: ' + str([lat_d * d2m, lon_d * d2m]) + 'm')
 
 	#pythag_d = (lat_d**2 + lon_d**2)**0.5
 	#print("Aprrox.", pythag_d, "deg = ", pythag_d * d2m, "m to WP (max_d=", max_d, ")")
@@ -140,11 +140,11 @@ def setWaypoint(position):
 	drone_position_notify = [lat, lon]
 
 	# print distance to target
-	lat_c = float(vehicle.location.global_frame.lat) # current location
-	lon_c = float(vehicle.location.global_frame.lon)
-	lat_d = abs(lat - lat_c)
-	lon_d = abs(lon - lon_c)
-	print('OFFSET: ' + str([lat_d * d2m, lon_d * d2m]) + 'm')
+	# lat_c = float(vehicle.location.global_frame.lat) # current location
+	# lon_c = float(vehicle.location.global_frame.lon)
+	# lat_d = abs(lat - lat_c)
+	# lon_d = abs(lon - lon_c)
+	# print('OFFSET: ' + str([lat_d * d2m, lon_d * d2m]) + 'm')
 	
 	# converts to co-ord system (LocationGlobalRelative relative to home point?)
 	point = LocationGlobal(lat,lon,alt)
