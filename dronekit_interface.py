@@ -136,13 +136,14 @@ class FCInterface:
 			alt = args[0]
 		except:
 			alt = self.getAltitude()
+
 		self.interface('setWaypoint' + ' ' + str(lat) + ' ' + str(lon) + ' ' + str(alt))
 
-    def setHeading(self, heading):
-        """
-        travels in set heading (in degrees from North.)
-        """
-        self.interface('setHeading' + ' ' + str(heading))
+	def setHeading(self, heading):
+		"""
+		travels in set heading (in degrees from North.)
+		"""
+		self.interface('setHeading' + ' ' + str(heading))
 
 	def startTakeoffSequence(self):
 		"""
