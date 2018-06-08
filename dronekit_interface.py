@@ -195,4 +195,4 @@ for i in range(10000):
 	print('Pos checked cyclically:', lat, lon)
 
 	# wait
-	time.sleep(0.25)
+	time.sleep(1)

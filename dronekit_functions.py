@@ -5,10 +5,8 @@ PYTHON 2
 list of functions interacting with dronekit, accepting strings as input to execute functions
 @author: OliG
 """
-from dronekit import connect, VehicleMode, LocationGlobalRelative
-from pymavlink import mavutil
-import time, argparse
-
+from dronekit import connect, VehicleMode, LocationGlobal
+import time
 drone_position_notify = [0,0]
 
 def connection():
@@ -18,15 +16,6 @@ def connection():
     sitl = dronekit_sitl.start_default()
     print 'sitl started'
     ##########################################
-    
-    # literally no clue what these 5 lines do but it might be needed but actually probably not
-    # Parse connection argument
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--connect", help="connection string")
-    args = parser.parse_args()
-    if args.connect:
-        connection_string = args.connect
-    
     
     # Connect to the Vehicle
     print "Connecting"
@@ -50,15 +39,15 @@ def connection():
     while vehicle.gps_0.fix_type < 2:
         print "Waiting for GPS...:", vehicle.gps_0.fix_type
         time.sleep(1)
+    while not vehicle.home_location:
+        cmds = vehicle.commands
+        cmds.download()
+        cmds.wait_ready()
+        if not vehicle.home_location:
+            print " Waiting for home location ..."
+            time.sleep(0.2)
+    print "\n Home location: %s" % vehicle.home_location
     
-    
-    # need to sort out home location setting
-    # set home location
-    cmds = vehicle.commands
-    cmds.download()
-    cmds.wait_ready()
-    
-    print str(vehicle.home_location)
     
     # Copter should arm in GUIDED mode
     vehicle.mode    = VehicleMode("GUIDED")
@@ -73,12 +62,12 @@ def connection():
     print " Mode: %s" % vehicle.mode
     print " Home Location: %s" % str(vehicle.home_location)
     
+    # set parameters
+    vehicle.parameters['WP_YAW_BEHAVIOR']=0
     
     # completes command
     print'DONE'
     
-
-
 def getHeading():
     print(repr(vehicle.heading))
     print 'DONE'
@@ -86,19 +75,17 @@ def getHeading():
 def getPosition():
     lat = float(vehicle.location.global_frame.lat)
     lon = float(vehicle.location.global_frame.lon)
-    
+    # fails if a waypoint hasn't been set yet 
     try:
-        print drone_position_notify
+        print 'target waypoint: ', drone_position_notify
     except:
         pass
-    
     # performs comparison between waypoint and current position
     try:
         lat_waypoint = float(drone_position_notify[0])
         lon_waypoint = float(drone_position_notify[1])
         lat_check = (lat_waypoint - lat)/lat_waypoint
         lon_check = (lon_waypoint - lon)/lon_waypoint
-        
         lat_percent = 5e-08
         lon_percent = 5e-08
         
@@ -108,7 +95,6 @@ def getPosition():
             print 'not reached!' 
     except:
         print 'failed' 
-    
     print lat, lon
     print 'DONE'
 
@@ -127,29 +113,22 @@ def getHome():
     print 'DONE'
 
 def setWaypoint(position):
-    
+    # check if altitude has been passed
     try:
         position[2]
     except:
         alt = float(vehicle.location.global_frame.alt)
-    
     lat, lon, alt = position
-    
     print position
     # convert to integers as input is 
     lat = float(lat)
     lon = float(lon) 
     alt = float(alt)
-    
     # saves current waypoint co-ordinates
     global drone_position_notify
     drone_position_notify = [lat, lon]
-    
-    # debug 
-    print drone_position_notify
-    
     # converts to co-ord system relative to home point
-    point = LocationGlobalRelative(lat,lon,alt)
+    point = LocationGlobal(lat,lon,alt)
     vehicle.simple_goto(point)
     print 'moving to', lat, '', lon, '', alt
     print 'DONE'
@@ -157,12 +136,11 @@ def setWaypoint(position):
 def setHeading(heading_relative):
     # retrieves values froms args list
     heading = int(heading_relative[0])
-    
     is_relative=0
-    yaw_speed = 30
+    yaw_speed = 20
     # create the CONDITION_YAW command using command_long_encode()
     msg = vehicle.message_factory.command_long_encode(
-        0, 0,    # target system, target component
+        0, 0,    # ignore
         mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
         0, #confirmation
         heading,    # param 1, yaw in degrees
@@ -172,8 +150,7 @@ def setHeading(heading_relative):
         0, 0, 0)    # param 5 ~ 7 not used
     # send command to vehicle
     vehicle.send_mavlink(msg)
-    vehicle.flush()
-
+    
 def startTakeoffSequence():
     # arming vehicle and making sure it is armed, if it fails then nothing else will work. 
     for i in range(0,500):
@@ -203,8 +180,6 @@ def notification(fn):
     if fn == 'LOCATION':
         # Add a callback `location_callback` for the `global_frame` attribute.
         vehicle.add_attribute_listener('location.global_frame', location_callback)
-    
-
 
 # end function
     
