@@ -13,17 +13,24 @@ import sys
 
 class FCInterface:
 
-	def __init__(self):
+	def __init__(self, moduleFolder=''):
+		
+		print('moduleFolder =', moduleFolder)
 
 		self.timeoutLines = 1000
 		self.notificationCallbacks = {} 	# dictionary, populated by setNotificationCallback
 		self.notificationQueue = [] 		# last at end
-		
+		self.enableLogging = 1
+
 		# opens cli running python2 dronekit functions
-		self.py2 = subprocess.Popen(['python2','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-		#self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+		filePath = moduleFolder + 'dronekit_functions.py'
+		self.py2 = subprocess.Popen(['python2', '-u', filePath], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
 		
 		print ("FCInterface initialised")
+
+	def log(self, *objects):
+		if self.enableLogging:
+			print(*objects)
 
 	def interface(self, command):
 		"""
@@ -32,11 +39,11 @@ class FCInterface:
 		script moves on.
 		"""
 
-		print("")
-		print('Sending cmd:', command)
+		self.log("")
+		self.log('Sending cmd:', command)
 		self.py2.stdin.write(command + '\n')
 		self.py2.stdin.flush()
-		print('Listening...')
+		self.log('Listening...')
 
 		returnLine = None 	# always the last line before the current one
 		numLinesRead = 0
@@ -46,13 +53,13 @@ class FCInterface:
 			
 			# check integrity of execution stack
 			if stackHeight == 1:
-				print("Erorr: stack height is not one = ", stackHeight)
+				self.log("Erorr: stack height is not one = ", stackHeight)
 
 			# read subprocess output
 			read = self.py2.stdout.readline()[:-1] # removes final newline character
 			
 			# print line through to interface
-			print(str(numLinesRead) + '| ' + read)
+			self.log(str(numLinesRead) + '| ' + read)
 
 			# handles
 			if read.startswith('NOTIFY'):
@@ -76,7 +83,7 @@ class FCInterface:
 			numLinesRead += 1
 
 		# only reached if DONE is not returned
-		print("Command timed out after", numLinesRead, "lines read")
+		self.log("Command timed out after", numLinesRead, "lines read")
 
 	def setNotificationCallback(self, name, fn):
 		self.notificationCallbacks[name] = fn
@@ -84,7 +91,7 @@ class FCInterface:
 	def handleNotifications(self):
 		while len(self.notificationQueue) > 0:
 			note = self.notificationQueue.pop(0)
-			print("Handling notification", note)
+			self.log("Handling notification", note)
 
 			if note in self.notificationCallbacks:
 				self.notificationCallbacks[note]()
@@ -118,7 +125,7 @@ class FCInterface:
 			lon = float(position[1])
 			return lat, lon
 		except:
-			print('getPosition failed')
+			self.log('getPosition failed')
 			return 0, 0
 		
 	def getAltitude(self):
@@ -164,58 +171,62 @@ class FCInterface:
 	# 	# Called once by command.py during aircraft boot
 	# 	# Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
-# Testing Run
-# -----------
+# Testing
+# -------
+if __name__ == "__main__":
+   # stuff only to run when not called via 'import' here
 
-approxDegsPerMetre = 9e-06
+	print("Testing FCI...")
 
-flightStage = "flight"
-numWPsDone = 0
-def waypointReachedCallback():
-	global numWPsDone, flightStage, lat, lon
+	approxDegsPerMetre = 9e-06
 
-	print("Waypoint reached (callback)")
-	numWPsDone += 1
-	print("WPs completed:", numWPsDone)
+	flightStage = "flight"
+	numWPsDone = 0
+	def waypointReachedCallback():
+		global numWPsDone, flightStage, lat, lon
 
-	if numWPsDone >= 5:
-		print(numWPsDone, "WPs complete, starting landing...")
-		fci.startLandingSequence()
-		flightStage = "rtl"
-	else:
-		print("Setting next WP...")
-		fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300)
+		self.log("Waypoint reached (callback)")
+		numWPsDone += 1
+		self.log("WPs completed:", numWPsDone)
 
-# init interface
-fci = FCInterface()
-fci.setNotificationCallback('waypointReached', waypointReachedCallback) # set callback reference
-time.sleep(4)
+		if numWPsDone >= 5:
+			self.log(numWPsDone, "WPs complete, starting landing...")
+			fci.startLandingSequence()
+			flightStage = "rtl"
+		else:
+			self.log("Setting next WP...")
+			fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300)
 
-# [TODO] do simulator here instead
+	# init interface
+	fci = FCInterface()
+	fci.setNotificationCallback('waypointReached', waypointReachedCallback) # set callback reference
+	time.sleep(4)
 
-# connect and take off
-fci.connection()
-fci.startTakeoffSequence()
-time.sleep(1)
+	# [TODO] do simulator here instead
 
-# get current position
-lat, lon = fci.getPosition()
-print('Initial position:', lat, lon)
+	# connect and take off
+	fci.connection()
+	fci.startTakeoffSequence()
+	time.sleep(1)
 
-# set initial waypoint
-fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300) # 9e-06 deg = 1 m
-
-# keep checking position and handling notifications
-for i in range(10000):
-	if flightStage == "rtl":
-		break
-
-	# update position
+	# get current position
 	lat, lon = fci.getPosition()
-	print('Pos checked cyclically:', lat, lon)
+	print('Initial position:', lat, lon)
 
-	# handle notifications raised
-	fci.handleNotifications()
+	# set initial waypoint
+	fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300) # 9e-06 deg = 1 m
 
-	# wait
-	time.sleep(0.25)
+	# keep checking position and handling notifications
+	for i in range(10000):
+		if flightStage == "rtl":
+			break
+
+		# update position
+		lat, lon = fci.getPosition()
+		print('Pos checked cyclically:', lat, lon)
+
+		# handle notifications raised
+		fci.handleNotifications()
+
+		# wait
+		time.sleep(0.25)
