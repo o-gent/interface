@@ -146,6 +146,7 @@ class FCInterface:
 # -------------------------------------------
 # example mission
 
+approxDegsPerMetre = 9e-06
 numWPsDone = 0
 def waypointReachedCallback():
 	global numWPsDone, lat, lon
@@ -180,19 +181,16 @@ print('Initial position:', lat, lon)
 # set initial waypoint
 fci.setWaypoint(lat + 0.0001, lon, 600)
 
+fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300) # 9e-06 deg = 1 m
+
 # keep checking position and handling notifications
 for i in range(10000):
-	# handle notifications
-	while len(fci.notificationQueue):
-		note = fci.notificationQueue.pop(0)
-		print("Handling notification", note)
-
-		if note in fci.notificationCallbacks:
-			fci.notificationCallbacks[note]()
-
 	# update position
 	lat, lon = fci.getPosition()
 	print('Pos checked cyclically:', lat, lon)
 
+	# handle notifications raised
+	fci.handleNotifications()
+
 	# wait
-	time.sleep(1)
+	time.sleep(0.25)
