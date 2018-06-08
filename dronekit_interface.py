@@ -69,6 +69,14 @@ class FCInterface:
         
     def setNotificationCallback(self, name, fn):
         self.notificationCallbacks[name] = fn
+        
+    def handleNotifications(self):
+        while len(self.notificationQueue) > 0:
+            note = self.notificationQueue.pop(0)
+            print("Handling notification", note)
+            
+        if note in self.notificationCallbacks:
+            self.notificationCallbacks[note]()
 
     def connection(self):
         """
