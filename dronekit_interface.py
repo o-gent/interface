@@ -9,6 +9,9 @@ Passes and recieves strings from dronekit_functions which interacts with droneki
 
 import subprocess
 import time
+import os
+clear = lambda: os.system('cls')
+
 
 log_enable = 1
 def logs(*args):
@@ -26,6 +29,11 @@ class FCInterface:
         # opens cli running python2 dronekit functions
         self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
         logs("FCInterface initialised")
+        
+        for i in range(16):
+            print(i)
+            time.sleep(0.25)
+            clear()
 
     def interface(self, command):
         """
@@ -117,7 +125,7 @@ class FCInterface:
         returns altitude above mean sea level in meters
         """
         ans = self.interface('getAltitude')
-        return ans
+        return float(ans[1:])
 
     def setWaypoint(self, lat, lon, *args):
         """
@@ -178,9 +186,7 @@ def waypointReachedCallback():
 # init interface
 fci = FCInterface()
 fci.setNotificationCallback('positionReached', waypointReachedCallback) # set callback reference
-time.sleep(4)
 
-# [TODO] do simulator here instead
 
 # connect and take off
 fci.connection()
