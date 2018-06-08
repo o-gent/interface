@@ -57,10 +57,8 @@ def connection():
 			time.sleep(0.2)
 	print "\n Home location: %s" % vehicle.home_location
 	
-	
 	# Copter should arm in GUIDED mode
 	vehicle.mode    = VehicleMode("GUIDED")
-
 
 	# Sanity Checks
 	print " Type: %s" % vehicle._vehicle_type
@@ -72,7 +70,7 @@ def connection():
 	print " Home Location: %s" % str(vehicle.home_location)
 	
 	# set parameters
-	vehicle.parameters['WP_YAW_BEHAVIOR']=0
+	vehicle.parameters['WP_YAW_BEHAVIOR'] = 0
 	
 	# completes command
 	print'DONE'
@@ -109,8 +107,8 @@ def getPosition():
 	print 'DONE'
 
 def getAltitude():
-	# returns altitude above mean sea level
-	alt = vehicle.location.global_frame.alt
+	# returns altitude above home location (location.alt is above mean sea level)
+	alt = (vehicle.location.global_frame.alt) - float(vehicle.home_location.alt)
 	print alt
 	print 'DONE'
 
@@ -131,10 +129,13 @@ def setWaypoint(position):
 	except:
 		position.append(float(vehicle.location.global_frame.alt))
 	
+	# altitude given is relative to ground/home
+	groundHeight = float(vehicle.home_location.alt)
+
 	lat, lon, alt = position
 	lat = float(lat)
 	lon = float(lon) 
-	alt = float(alt)
+	alt = float(alt) + groundHeight	
 	
 	# saves current waypoint co-ordinates
 	drone_position_notify = [lat, lon]
@@ -149,7 +150,7 @@ def setWaypoint(position):
 	# converts to co-ord system (LocationGlobalRelative relative to home point?)
 	point = LocationGlobal(lat,lon,alt)
 	vehicle.simple_goto(point)
-	print 'moving to', lat, '', lon, '', alt
+	print 'waypoint set:', lat, '', lon, '', alt
 	print 'DONE'
 	
 def setHeading(heading_relative):

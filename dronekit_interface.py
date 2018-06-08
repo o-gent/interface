@@ -15,7 +15,7 @@ class FCInterface:
 
 	def __init__(self, moduleFolder=''):
 
-		self.timeoutLines = 1000
+		self.timeoutLines = 500
 		self.notificationCallbacks = {} 	# dictionary, populated by setNotificationCallback
 		self.notificationQueue = [] 		# last at end
 		self.enableLogging = 1				# should be enabled by default
@@ -129,7 +129,7 @@ class FCInterface:
 		
 	def getAltitude(self):
 		"""
-		returns altitude above mean sea level in meters, no args
+		returns altitude above ground in meters, no args
 		"""
 		ans = self.interface('getAltitude')
 		return float(ans)
