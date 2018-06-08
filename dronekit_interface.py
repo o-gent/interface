@@ -44,8 +44,8 @@ class FCInterface:
 			# self.waypoint_reached = False     (no longer required)
 			
 			# check integrity of execution stack
-			if stackHeight == 0:
-				print("Erorr: stack height is non-zero = ", stackHeight)
+			if stackHeight == 1:
+				print("Erorr: stack height is not one = ", stackHeight)
 
 			# read subprocess output
 			read = self.py2.stdout.readline()[:-1] # removes final newline character
@@ -182,7 +182,7 @@ time.sleep(4)
 # connect and take off
 fci.connection()
 fci.startTakeoffSequence()
-time.sleep(10)
+time.sleep(5)
 
 # get current position
 lat, lon = fci.getPosition()

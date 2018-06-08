@@ -5,7 +5,7 @@ PYTHON 2
 list of functions interacting with dronekit, accepting strings as input to execute functions
 @author: OliG
 """
-from dronekit import connect, VehicleMode, LocationGlobalRelative
+from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative
 from pymavlink import mavutil
 import time, argparse
 
@@ -19,6 +19,7 @@ def connection():
 	print('sitl started')
 	##########################################
 	
+	# (seems pointless?)
 	# literally no clue what these 5 lines do but it might be needed but actually probably not
 	# Parse connection argument
 	# parser = argparse.ArgumentParser()
@@ -92,8 +93,10 @@ def getPosition():
 	# check if waypoint reached
 	lat_waypoint = float(drone_position_notify[0])
 	lon_waypoint = float(drone_position_notify[1])
-	lat_check = (lat_waypoint - lat)/lat # use target position here - much less likely to = 0 
-	lon_check = (lon_waypoint - lon)/lon
+	lat_check = abs((lat_waypoint - lat)/lat) 	# use target position here - much less likely to = 0 
+	lon_check = abs((lon_waypoint - lon)/lon)
+
+	print 'percentage to WP: ' + str(lat_check * 100) + '% ' + str(lon_check * 100) + '%'
 	
 	lat_percent = 5e-08
 	lon_percent = 5e-08
@@ -137,8 +140,8 @@ def setWaypoint(position):
 	global drone_position_notify
 	drone_position_notify = [lat, lon]
 	
-	# converts to co-ord system relative to home point
-	point = LocationGlobalRelative(lat,lon,alt)
+	# converts to co-ord system (LocationGlobalRelative relative to home point?)
+	point = LocationGlobal(lat,lon,alt)
 	vehicle.simple_goto(point)
 	print 'moving to', lat, '', lon, '', alt
 	print 'DONE'
@@ -168,18 +171,28 @@ def setHeading(heading_relative):
 	vehicle.send_mavlink(msg)
 	vehicle.flush()
 
+	print 'DONE'
+
 def startTakeoffSequence():
 	# arming vehicle and making sure it is armed, if it fails then nothing else will work. 
 	for i in range(0,100):
 		vehicle.armed = True
 		print "Armed: %s" % vehicle.armed
+
+		# wait for critical motor arming (arm seems to take a while and doesn't block)
+		# if these dont complete the aircraft will not move in SITL
+		time.sleep(0.5)
+
 		if vehicle.armed == True:
 			break
 	
-	print 'TAKING OFF'
+	print 'taking off...'
 	vehicle.simple_takeoff(10)
+
 	print 'DONE'
 	# Set the controller to take-off and reach a safe altitude (e.g. 20ft)
+
+
 
 def startLandingSequence():
 	# should probably check the parameters for this..
@@ -187,17 +200,14 @@ def startLandingSequence():
 	print 'Return to Land executed'
 	print 'DONE'
 
+# def notification(fn):
+# 	# Notification functions
+# 	def location_callback(self, attr_name, value):
+# 		print "Location (Global): ", value
 
-def notification(fn):
-	# Notification functions
-	def location_callback(self, attr_name, value):
-		print "Location (Global): ", value
-
-	if fn == 'LOCATION':
-		# Add a callback `location_callback` for the `global_frame` attribute.
-		vehicle.add_attribute_listener('location.global_frame', location_callback)
-	
-
+# 	if fn == 'LOCATION':
+# 		# Add a callback `location_callback` for the `global_frame` attribute.
+# 		vehicle.add_attribute_listener('location.global_frame', location_callback)
 
 # end function
 	
