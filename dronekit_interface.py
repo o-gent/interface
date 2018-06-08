@@ -12,53 +12,14 @@ import time
 
 class FCInterface:
 
-# =============================================================================
-#     def __init__(self):
-#         
-#         # opens cli running python2 dronekit functions
-#         self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-#         #self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-#         print ("FCInterface initialised")
-# 
-#     def interface(self, command):
-#         """
-#         pass a function name to dronekit_functions
-#         returns single line string resulting from function. When DONE is passed function is considered complete and 
-#         script moves on.
-#         """
-#         print('writing------------------------------------------------------------------------')
-#         self.py2.stdin.write(command + '\n')
-#         self.py2.stdin.flush()
-#         print('reading------------------------------------------------------------------------')
-#         for i in range(0,100):
-#             
-#             #self.waypoint_reached = False
-#             
-#             
-#             read = self.py2.stdout.readline()
-#             
-#             if read.startswith('NOTIFY'):
-#                 try:
-#                     self.waypoint_reached_fn()
-#                 except:
-#                     pass
-#             
-#             print(read)
-#             # keeps last line printed
-#             cmdreturn = read
-#             
-#             if read.startswith('DONE'):
-#                 return(cmdreturn)
-#                 break
-# =============================================================================
     def __init__(self):
+        
         self.timeoutLines = 1000
         self.notificationCallbacks = {} 	# dictionary, populated by setNotificationCallback
         self.notificationQueue = [] 		# last at end
         
         # opens cli running python2 dronekit functions
         self.py2 = subprocess.Popen(['python','-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
-        #self.py2 = subprocess.Popen([pycmd, '-u','dronekit_functions.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
         print ("FCInterface initialised")
 
     def interface(self, command):
@@ -76,6 +37,7 @@ class FCInterface:
         returnLine = None 	# always the last line before the current one
         numLinesRead = 0
         stackHeight = 0 	# number of execution levels = number of COMMANDs printed - number of DONEs printed
+        
         while numLinesRead < self.timeoutLines:
 			# self.waypoint_reached = False     (no longer required)
 			
@@ -87,6 +49,7 @@ class FCInterface:
             read = self.py2.stdout.readline()[:-1] # removes final newline character
             # print line through to interface
             print(str(numLinesRead) + '| ' + read)
+            
             # handles
             if read.startswith('NOTIFY'):
                 self.notificationQueue.append(read[7:])
@@ -112,9 +75,7 @@ class FCInterface:
         connection to vehicle through interface and performs basic setup including setting home.
         won't complete until connection has complete
         """
-        
         self.interface('connection')
-        
         return True
 
     def getHeading(self):
@@ -126,10 +87,9 @@ class FCInterface:
     
     def getPosition(self):
         """
-        no args, returns lat and lon as two vars
+        returns lat and lon as two vars
         """
         ans = self.interface('getPosition')
-
         # converts single string to two ints
         try:
             position = ans.split()
@@ -142,27 +102,26 @@ class FCInterface:
         
     def getAltitude(self):
         """
-        returns altitude above mean sea level in meters, no args
+        returns altitude above mean sea level in meters
         """
         ans = self.interface('getAltitude')
         return ans
 
-    def setWaypoint(self, lat, lon, alt):
+    def setWaypoint(self, lat, lon, *args):
         """
-        uses simple_goto
+        IN: target LAT, LON and optional altitude, if no altittude passed it will use current altitude
         """
+        try:
+            alt = args[0]
+        except:
+            alt = self.getAltitude()
         self.interface('setWaypoint' + ' ' + str(lat) + ' ' + str(lon) + ' ' + str(alt))
 
-    def setHeading(self, heading, *args):
+    def setHeading(self, heading):
         """
-        Pass a heading in degrees from North. I think if you pass True as a second argument the copter will return to 
-        using a relative heading (it may travel faster)
+        travels in set heading (in degrees from North.)
         """
-        try: 
-            relative = str(args[0])
-        except:
-            relative = ''
-        self.interface('setHeading' + ' ' + str(heading) + ' ' + relative)
+        self.interface('setHeading' + ' ' + str(heading))
 
     def startTakeoffSequence(self):
         """
@@ -182,25 +141,58 @@ class FCInterface:
         # Called once by command.py during aircraft boot
         # Sets up a notification so that, every time a commanded action is completed (e.g. waypoint/heading reached, take-off completed), function fn will be called-back
 
-FCI = FCInterface()
+
+
+# -------------------------------------------
+# example mission
+
+numWPsDone = 0
+def waypointReachedCallback():
+	global numWPsDone, lat, lon
+
+	print("Waypoint reached (callback)")
+	numWPsDone += 1
+	print("WPs completed:", numWPsDone)
+
+	if numWPsDone >= 5:
+		print(numWPsDone, "WPs complete, starting landing...")
+		fci.startLandingSequence()
+	else:
+		print("Setting next WP...")
+		fci.setWaypoint(lat, lon + 0.0002, 300)
+
+# init interface
+fci = FCInterface()
+fci.setNotificationCallback('waypointReached', waypointReachedCallback) # set callback reference
 time.sleep(4)
 
-FCI.connection()
-FCI.startTakeoffSequence()
-time.sleep(30)
+# [TODO] do simulator here instead
 
-FCI.getAltitude()
+# connect and take off
+fci.connection()
+fci.startTakeoffSequence()
+time.sleep(10)
 
-FCI.getPosition()
-lat, lon = FCI.getPosition()
+# get current position
+lat, lon = fci.getPosition()
+print('Initial position:', lat, lon)
 
-print(lat, lon)
+# set initial waypoint
+fci.setWaypoint(lat + 0.0001, lon, 600)
 
-time.sleep(5)
-
-FCI.setWaypoint(float(lat - 0.001), lon, 600)
+# keep checking position and handling notifications
 for i in range(10000):
-    lat, lon = FCI.getPosition()
-    time.sleep(2)
-    
-FCI.startLandingSequence()
+	# handle notifications
+	while len(fci.notificationQueue):
+		note = fci.notificationQueue.pop(0)
+		print("Handling notification", note)
+
+		if note in fci.notificationCallbacks:
+			fci.notificationCallbacks[note]()
+
+	# update position
+	lat, lon = fci.getPosition()
+	print('Pos checked cyclically:', lat, lon)
+
+	# wait
+	time.sleep(0.25)
