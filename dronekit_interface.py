@@ -25,6 +25,7 @@ class FCInterface:
 		# opens cli running python2 dronekit functions
 		filePath = moduleFolder + 'dronekit_functions.py'
 		self.py2 = subprocess.Popen(['python2', '-u', filePath], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+
 		
 		print ("FCInterface initialised")
 
