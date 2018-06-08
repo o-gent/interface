@@ -9,6 +9,7 @@ Passes and recieves strings from dronekit_functions which interacts with droneki
 
 import subprocess
 import time
+import sys
 
 class FCInterface:
 
@@ -80,6 +81,14 @@ class FCInterface:
 	def setNotificationCallback(self, name, fn):
 		self.notificationCallbacks[name] = fn
 
+	def handleNotifications(self):
+		while len(self.notificationQueue) > 0:
+			note = self.notificationQueue.pop(0)
+			print("Handling notification", note)
+
+			if note in self.notificationCallbacks:
+				self.notificationCallbacks[note]()
+
 	def connection(self):
 		"""
 		connection to vehicle through interface and performs basic setup including setting home.
@@ -95,7 +104,7 @@ class FCInterface:
 		no args, returns heading in degress from North
 		"""
 		ans = self.interface('getHeading')
-		return ans 
+		return float(ans) 
 	
 	def getPosition(self):
 		"""
@@ -109,6 +118,7 @@ class FCInterface:
 			lon = float(position[1])
 			return lat, lon
 		except:
+			print('getPosition failed')
 			return 0, 0
 		
 	def getAltitude(self):
@@ -116,24 +126,23 @@ class FCInterface:
 		returns altitude above mean sea level in meters, no args
 		"""
 		ans = self.interface('getAltitude')
-		return ans
+		return float(ans)
 
-	def setWaypoint(self, lat, lon, alt):
+	def setWaypoint(self, lat, lon, *args):
 		"""
-		uses simple_goto
+		IN: target LAT, LON and optional altitude, if no altittude passed it will use current altitude
 		"""
+		try:
+			alt = args[0]
+		except:
+			alt = self.getAltitude()
 		self.interface('setWaypoint' + ' ' + str(lat) + ' ' + str(lon) + ' ' + str(alt))
 
-	def setHeading(self, heading, *args):
-		"""
-		Pass a heading in degrees from North. I think if you pass True as a second argument the copter will return to 
-		using a relative heading (it may travel faster)
-		"""
-		try: 
-			relative = str(args[0])
-		except:
-			relative = ''
-		self.interface('setHeading' + ' ' + str(heading) + ' ' + relative)
+    def setHeading(self, heading):
+        """
+        travels in set heading (in degrees from North.)
+        """
+        self.interface('setHeading' + ' ' + str(heading))
 
 	def startTakeoffSequence(self):
 		"""
@@ -157,9 +166,12 @@ class FCInterface:
 # Testing Run
 # -----------
 
+approxDegsPerMetre = 9e-06
+
+flightStage = "flight"
 numWPsDone = 0
 def waypointReachedCallback():
-	global numWPsDone, lat, lon
+	global numWPsDone, flightStage, lat, lon
 
 	print("Waypoint reached (callback)")
 	numWPsDone += 1
@@ -168,9 +180,10 @@ def waypointReachedCallback():
 	if numWPsDone >= 5:
 		print(numWPsDone, "WPs complete, starting landing...")
 		fci.startLandingSequence()
+		flightStage = "rtl"
 	else:
 		print("Setting next WP...")
-		fci.setWaypoint(lat, lon + 0.0002, 300)
+		fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300)
 
 # init interface
 fci = FCInterface()
@@ -182,28 +195,26 @@ time.sleep(4)
 # connect and take off
 fci.connection()
 fci.startTakeoffSequence()
-time.sleep(5)
+time.sleep(1)
 
 # get current position
 lat, lon = fci.getPosition()
 print('Initial position:', lat, lon)
 
 # set initial waypoint
-fci.setWaypoint(lat + 0.0001, lon, 600)
+fci.setWaypoint(lat, lon + approxDegsPerMetre * 10, 300) # 9e-06 deg = 1 m
 
 # keep checking position and handling notifications
 for i in range(10000):
-	# handle notifications
-	while len(fci.notificationQueue):
-		note = fci.notificationQueue.pop(0)
-		print("Handling notification", note)
-
-		if note in fci.notificationCallbacks:
-			fci.notificationCallbacks[note]()
+	if flightStage == "rtl":
+		break
 
 	# update position
 	lat, lon = fci.getPosition()
 	print('Pos checked cyclically:', lat, lon)
+
+	# handle notifications raised
+	fci.handleNotifications()
 
 	# wait
 	time.sleep(0.25)
